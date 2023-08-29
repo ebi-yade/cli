@@ -34,6 +34,8 @@ type CheckoutOptions struct {
 	BranchName        string
 }
 
+// NewCmdCheckout returns a cobra command for "checkout"
+// Important: This function should be kept in sync with NewCmdSwitch (see below).
 func NewCmdCheckout(f *cmdutil.Factory, runF func(*CheckoutOptions) error) *cobra.Command {
 	opts := &CheckoutOptions{
 		IO:         f.IOStreams,
@@ -47,6 +49,44 @@ func NewCmdCheckout(f *cmdutil.Factory, runF func(*CheckoutOptions) error) *cobr
 	cmd := &cobra.Command{
 		Use:   "checkout {<number> | <url> | <branch>}",
 		Short: "Check out a pull request in git",
+		Args:  cmdutil.ExactArgs(1, "argument required"),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			opts.Finder = shared.NewFinder(f)
+
+			if len(args) > 0 {
+				opts.SelectorArg = args[0]
+			}
+
+			if runF != nil {
+				return runF(opts)
+			}
+			return checkoutRun(opts)
+		},
+	}
+
+	cmd.Flags().BoolVarP(&opts.RecurseSubmodules, "recurse-submodules", "", false, "Update all submodules after checkout")
+	cmd.Flags().BoolVarP(&opts.Force, "force", "f", false, "Reset the existing local branch to the latest state of the pull request")
+	cmd.Flags().BoolVarP(&opts.Detach, "detach", "", false, "Checkout PR with a detached HEAD")
+	cmd.Flags().StringVarP(&opts.BranchName, "branch", "b", "", "Local branch name to use (default: the name of the head branch)")
+
+	return cmd
+}
+
+// NewCmdSwitch returns a cobra command for "switch"
+// Important: The command is an alias for `gh pr checkout` and this function should be kept in sync with NewCmdCheckout.
+func NewCmdSwitch(f *cmdutil.Factory, runF func(*CheckoutOptions) error) *cobra.Command {
+	opts := &CheckoutOptions{
+		IO:         f.IOStreams,
+		HttpClient: f.HttpClient,
+		GitClient:  f.GitClient,
+		Config:     f.Config,
+		Remotes:    f.Remotes,
+		Branch:     f.Branch,
+	}
+
+	cmd := &cobra.Command{
+		Use:   "switch {<number> | <url> | <branch>}",
+		Short: "Check out a pull request in git (alias for gh pr checkout)",
 		Args:  cmdutil.ExactArgs(1, "argument required"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			opts.Finder = shared.NewFinder(f)

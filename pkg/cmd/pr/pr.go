@@ -54,6 +54,7 @@ func NewCmdPR(f *cmdutil.Factory) *cobra.Command {
 		cmdView.NewCmdView(f, nil),
 		cmdDiff.NewCmdDiff(f, nil),
 		cmdCheckout.NewCmdCheckout(f, nil),
+		cmdCheckout.NewCmdSwitch(f, nil),
 		cmdChecks.NewCmdChecks(f, nil),
 		cmdReview.NewCmdReview(f, nil),
 		cmdMerge.NewCmdMerge(f, nil),
